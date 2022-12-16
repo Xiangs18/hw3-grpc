@@ -4,16 +4,20 @@ import logging
 import grpc
 from bookstore_pb2 import Book, CreateBookResponse
 import bookstore_pb2_grpc
+# Books are harcordwed as a list of books and imported from db.py file
 from db import Books
 
 
 class InventoryService(bookstore_pb2_grpc.InventoryServiceServicer):
     def GetBook(self, request, context):
+        # ISBN missing
         if not request.ISBN:
             context.abort(grpc.StatusCode.FAILED_PRECONDITION, "Please input an ISBN")
+        # find a book with matching ISBN
         for book in Books:
             if book.ISBN == request.ISBN:
                 return book
+        # ISBN not found
         context.abort(grpc.StatusCode.NOT_FOUND, "Such ISBN is not found")
 
     def CreateBook(self, request, context):
@@ -23,6 +27,7 @@ class InventoryService(bookstore_pb2_grpc.InventoryServiceServicer):
         genre = request.genre
         publish_year = request.publish_year
         check_genre = genre in range(3) or genre
+        # all attributes are required for creating a book
         if ISBN and title and author and publish_year and check_genre:
             book_new = Book(
                 ISBN=ISBN,
